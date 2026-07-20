@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Callable, Dict, List, Optional, Protocol, Set, Tuple
 
 
 @dataclass(frozen=True)
@@ -37,6 +37,21 @@ class MediaAsset:
 
 
 @dataclass(frozen=True)
+class OutputContract:
+    required_fields: Tuple[str, ...] = ("accepted", "label", "score", "reason")
+    score_range: Tuple[float, float] = (0.0, 1.0)
+    allow_extra_fields: bool = True
+
+
+@dataclass(frozen=True)
+class ModelRequirements:
+    modalities: Set[str] = field(default_factory=lambda: {"text"})
+    structured_output: bool = True
+    max_latency_ms: Optional[int] = None
+    max_cost: Optional[float] = None
+
+
+@dataclass(frozen=True)
 class BusinessRequest:
     request_id: str
     task_name: str
@@ -44,6 +59,8 @@ class BusinessRequest:
     media_assets: List[MediaAsset] = field(default_factory=list)
     context: Dict[str, Any] = field(default_factory=dict)
     prompt_spec: Optional[PromptSpec] = None
+    output_contract: OutputContract = field(default_factory=OutputContract)
+    model_requirements: ModelRequirements = field(default_factory=ModelRequirements)
 
 
 @dataclass(frozen=True)
@@ -55,6 +72,8 @@ class ModelServiceProfile:
     token: Optional[str] = None
     transport: str = "mock"
     options: Dict[str, Any] = field(default_factory=dict)
+    capabilities: Set[str] = field(default_factory=lambda: {"text", "structured_output"})
+    priority: int = 100
 
 
 @dataclass(frozen=True)
@@ -79,11 +98,26 @@ class BusinessResult:
 
 
 @dataclass(frozen=True)
+class RunEvent:
+    name: str
+    trace_id: str
+    request_id: str
+    timestamp: float
+    attributes: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class RunEnvelope:
     request: BusinessRequest
     prompt: str
     response: ModelResponse
     result: BusinessResult
+    trace_id: str = ""
+    attempts: int = 1
+    events: Tuple[RunEvent, ...] = ()
+
+
+EventListener = Callable[[RunEvent], None]
 
 
 class PromptBuilder(Protocol):

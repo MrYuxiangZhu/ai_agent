@@ -28,6 +28,8 @@ def load_model_profiles(config_path: Path = DEFAULT_CONFIG_PATH) -> Dict[str, Mo
             token=os.getenv(f"EXAMPLE_{item['provider'].upper()}_TOKEN", item.get("token") or "") or None,
             transport=item.get("transport", "http_json"),
             options=item.get("options", {}),
+            capabilities=set(item.get("capabilities", ["text", "structured_output"])),
+            priority=int(item.get("priority", 100)),
         )
         profiles[profile.provider] = profile
     return profiles or _default_profiles()

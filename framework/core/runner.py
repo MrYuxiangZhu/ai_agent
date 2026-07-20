@@ -8,6 +8,11 @@ from framework.core.types import BusinessRequest, ModelClient, PromptBuilder, Re
 
 
 class InferenceRunner:
+    """Compatibility runner for simple single-model integrations.
+
+    New applications should prefer ``WorkflowRuntime`` for routing, retries,
+    contracts and observability.
+    """
     def __init__(self, prompt_builder: PromptBuilder, model_client: ModelClient, result_parser: ResultParser) -> None:
         self._prompt_builder = prompt_builder
         self._model_client = model_client
