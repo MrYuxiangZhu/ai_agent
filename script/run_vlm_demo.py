@@ -14,6 +14,7 @@ from vlm.core import MediaAsset, PromptSpec, VlmRequest, load_api_configs, pick_
 
 
 def parse_args() -> argparse.Namespace:
+    """解析通用演示的供应商、图片、任务指令和配置查询参数。"""
     parser = argparse.ArgumentParser(description="运行统一 VLM 示例")
     parser.add_argument("--provider", default="mock", help="mock、qwen、doubao 或 custom")
     parser.add_argument("--image", type=Path)
@@ -23,6 +24,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """组装配置与请求，执行一次推理并将结构化结果输出到终端。
+
+    ``--list-providers`` 分支只展示脱敏配置，不发起模型请求。正常分支允许
+    可选图片输入，并由统一 Runtime 负责适配模型、解析输出和记录日志。
+    """
     args = parse_args()
     if args.list_providers:
         _, configs = load_api_configs()

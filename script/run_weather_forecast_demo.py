@@ -10,7 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from business.weather_forecast.service import WeatherForecastRequestBuilder
-from vlm import OpenaiApiConfig, create_vlm
+from vlm import OpenaiApiConfig, RequestContext, create_vlm
 from vlm.core import PromptSpec, VlmRequest
 
 
@@ -36,6 +36,11 @@ WORK_DIR = "/tmp/example_weather_forecast_work"
 
 
 def main() -> int:
+    """读取文件顶部业务和模型配置，执行天气建议生成并保存原始响应。
+
+    业务 Prompt 会从旧天气请求规范转换为统一 ``VlmRequest``；调用方只需在
+    本文件顶部切换 ``ACTIVE_MODEL``，无需传递命令行参数。
+    """
     work_dir = Path(WORK_DIR)
     if not work_dir.is_absolute():
         work_dir = ROOT / work_dir
@@ -54,7 +59,9 @@ def main() -> int:
             output_instruction=spec.output_format if spec else "请只输出 JSON。",
         ),
     )
-    run = create_vlm(ACTIVE_MODEL).run(request)
+    run = create_vlm(ACTIVE_MODEL, max_concurrency=100, max_retries=2).run(
+        request, RequestContext(user_id="weather-demo", tenant_id="examples")
+    )
     result = run.result
     result_path = work_dir / "weather_forecast_result.json"
     result_path.write_text(run.response.content, encoding="utf-8")
